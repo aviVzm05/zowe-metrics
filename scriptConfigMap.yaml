@@ -1,0 +1,50 @@
+apiVersion: v1
+data:
+  getlogs.sh: |-
+    #shell script to download the console messages from mainfame
+    #!/bin/bash
+
+    getEpochDate() {
+        local epoch
+        epoch=$(date -d "$1" +"%s")
+        echo $epoch
+    }
+
+    #function to create prometheus metrics format
+    createPromLogs() {
+        read -a fields <<<"$1"
+        logTimeStamp=$(getEpochDate ${fields[0]})
+        identifier=${fields[1]}
+        jobName=${fields[2]}
+        status=${fields[3]}
+
+        if [[ $status == "STARTED" ]]
+        then
+          console_log_data="console_log_start{jobname=\"${jobName}\"} $logTimeStamp"
+        else
+          returnCode=${fields[5]}
+          echo $returnCode
+          console_log_data="console_log_end{jobname=\"${jobName}\"} $logTimeStamp"
+        fi
+        sendToPushGateway $console_log_data
+    }
+
+    #function to push the logs info to pushgateway
+    sendToPushGateway() {
+        echo $1 $2
+        echo $1 $2 | curl --data-binary @- http://pushgateway:9091/metrics/job/zowelog
+    }
+
+    while true
+    do
+      zowe logs list logs --range 15s | grep 'HASP373\|HASP395' > inputDataLogs.txt
+      while read line || [ -n "$line" ]
+      do
+        echo "$line"
+        createPromLogs "$line"
+      done < inputDataLogs.txt
+      sleep 15s
+    done
+kind: ConfigMap
+metadata:
+  name: scriptfile

@@ -1,0 +1,55 @@
+# ideally, this would be using ZOWE image with command to pull console logs and then pushing them
+# to pushgateway at a given frequency
+# for now, this is an approximation.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: createlogs
+  labels:
+      element: logs
+      type: zowetest
+      env: test
+spec:
+  selector:
+    matchLabels:
+      element: logs
+      type: zowetest
+      env: test
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        element: logs
+        type: zowetest
+        env: test
+    spec:
+      containers:
+      - name: createlogs
+        image: avivzm05/zowe-cli:0.2
+        env:
+        - name: USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: zowesecrets
+              key: username
+              optional: false
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: zowesecrets
+              key: password
+              optional: false
+        - name: HOST
+          # value: 192.86.32.67
+          value: 204.90.115.200
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: script
+          mountPath: /scripts
+      volumes:
+      - name: script
+        configMap: 
+          name: scriptfile
+          defaultMode: 0777

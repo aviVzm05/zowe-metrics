@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pushgateway
+  labels:
+    createdby: avinash
+    type: zowetest
+    env: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      element: pushgateway
+      type: zowetest
+      env: test
+  template:
+    metadata:
+      labels:
+        element: pushgateway
+        type: zowetest
+        env: test
+    spec:
+      containers:
+      - name: pushgateway
+        image: prom/pushgateway:latest
+        ports:
+        - containerPort: 9091

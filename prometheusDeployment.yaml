@@ -1,0 +1,43 @@
+# sample - https://github.com/bibinwilson/kubernetes-prometheus/blob/master/prometheus-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  labels:
+      element: prometheus
+      type: zowetest
+      env: test
+spec:
+  selector:
+    matchLabels:
+      element: prometheus
+      type: zowetest
+      env: test
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        element: prometheus
+        type: zowetest
+        env: test
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus:latest
+        args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus/"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus/
+        - name: storage
+          mountPath: /prometheus/
+        ports:
+        - containerPort: 9090
+      volumes:
+      - name: config
+        configMap:
+          name: prometheusconfig
+      - name: storage
+        emptyDir: {}
+        
